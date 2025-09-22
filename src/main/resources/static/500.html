@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>500 - Serverfel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .error-container {
+            background: white;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            max-width: 500px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+        .error-code {
+            font-size: 6rem;
+            font-weight: bold;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+<div class="error-container">
+    <div class="error-code">500</div>
+    <h2>Något gick fel</h2>
+    <p class="text-muted">Ett oväntat fel uppstod. Vi arbetar på att lösa problemet.</p>
+    <p class="text-muted small">Försök igen om en stund.</p>
+    <div class="mt-4">
+        <a href="/index.html" class="btn btn-primary">Till startsidan</a>
+        <button onclick="window.location.reload()" class="btn btn-secondary">Försök igen</button>
+    </div>
+</div>
+</body>
+</html>

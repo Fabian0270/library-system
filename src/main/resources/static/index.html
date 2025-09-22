@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Välkommen - Bibliotekssystem</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .hero-section {
+            color: white;
+            padding: 100px 0;
+            text-align: center;
+        }
+        .hero-title {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .feature-card {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            margin: 20px 0;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+        .feature-card:hover {
+            transform: translateY(-10px);
+        }
+        .btn-lg {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+        <a class="navbar-brand" href="/">📚 Bibliotekssystem</a>
+        <div class="ms-auto">
+            <a href="/login.html" class="btn btn-outline-light me-2">Logga in</a>
+            <a href="/register.html" class="btn btn-light">Registrera</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="container">
+        <h1 class="hero-title">Välkommen till Bibliotekssystemet</h1>
+        <p class="lead mb-5">Ett säkert och modernt system för hantering av böcker och lån</p>
+        <div>
+            <a href="/login.html" class="btn btn-light btn-lg">Logga in</a>
+            <a href="/register.html" class="btn btn-outline-light btn-lg">Skapa konto</a>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="container pb-5">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="feature-card text-center">
+                <h3>🔒 Säker inloggning</h3>
+                <p>Dina uppgifter skyddas med BCrypt-kryptering och säker sessionshantering</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-card text-center">
+                <h3>📖 Enkelt att låna</h3>
+                <p>Bläddra bland böcker och hantera dina lån med några enkla klick</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-card text-center">
+                <h3>👥 Rollbaserad åtkomst</h3>
+                <p>Olika användarnivåer med anpassade rättigheter för säker hantering</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Test Users Info -->
+<div class="container pb-5">
+    <div class="card">
+        <div class="card-body">
+            <h4 class="card-title">Testanvändare</h4>
+            <p class="card-text">För att testa systemet kan du använda följande inloggningar:</p>
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Administratör:</h6>
+                    <code>admin@bibliotek.se / Admin123</code>
+                </div>
+                <div class="col-md-6">
+                    <h6>Standardanvändare:</h6>
+                    <code>user@bibliotek.se / User123</code>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Kontrollera om användaren redan är inloggad
+    fetch('/api/auth/check', { credentials: 'include' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.authenticated) {
+                // Om redan inloggad, omdirigera till dashboard
+                window.location.href = '/dashboard.html';
+            }
+        })
+        .catch(error => console.error('Auth check failed:', error));
+</script>
+</body>
+</html>

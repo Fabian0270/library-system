@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrera - Bibliotekssystem</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .register-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 12px;
+        }
+        .password-requirements {
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+        .field-error {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 5px;
+        }
+        .valid-feedback {
+            color: #28a745;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+<div class="register-container">
+    <div class="text-center mb-4">
+        <h2>📚 Skapa konto</h2>
+        <p class="text-muted">Registrera dig för att börja använda bibliotekssystemet</p>
+    </div>
+
+    <div id="alertBox" class="alert d-none" role="alert"></div>
+
+    <form id="registerForm">
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="firstName" class="form-label">Förnamn</label>
+                <input type="text"
+                       class="form-control"
+                       id="firstName"
+                       required
+                       minlength="2"
+                       maxlength="50">
+                <div class="field-error d-none" id="firstNameError"></div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label for="lastName" class="form-label">Efternamn</label>
+                <input type="text"
+                       class="form-control"
+                       id="lastName"
+                       required
+                       minlength="2"
+                       maxlength="50">
+                <div class="field-error d-none" id="lastNameError"></div>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="email" class="form-label">E-postadress</label>
+            <input type="email"
+                   class="form-control"
+                   id="email"
+                   required
+                   placeholder="din.email@exempel.com">
+            <div class="field-error d-none" id="emailError"></div>
+        </div>
+
+        <div class="mb-3">
+            <label for="password" class="form-label">Lösenord</label>
+            <input type="password"
+                   class="form-control"
+                   id="password"
+                   required>
+            <div class="password-requirements mt-2">
+                <div id="lengthCheck">❌ Minst 8 tecken</div>
+                <div id="letterCheck">❌ Innehåller bokstäver</div>
+                <div id="numberCheck">❌ Innehåller siffror</div>
+            </div>
+            <div class="field-error d-none" id="passwordError"></div>
+        </div>
+
+        <div class="mb-3">
+            <label for="confirmPassword" class="form-label">Bekräfta lösenord</label>
+            <input type="password"
+                   class="form-control"
+                   id="confirmPassword"
+                   required>
+            <div class="field-error d-none" id="confirmPasswordError"></div>
+            <div class="valid-feedback d-none" id="passwordMatch">✅ Lösenorden matchar</div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 mb-3" id="registerBtn">
+            Skapa konto
+        </button>
+
+        <div class="text-center">
+            <p class="mb-0">Har du redan ett konto?
+                <a href="/login.html">Logga in här</a>
+            </p>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Lösenordsvalidering i realtid
+    const passwordInput = document.getElementById('password');
+    const confirmPasswordInput = document.getElementById('confirmPassword');
+
+    passwordInput.addEventListener('input', validatePassword);
+    confirmPasswordInput.addEventListener('input', checkPasswordMatch);
+
+    function validatePassword() {
+        const password = passwordInput.value;
+
+        // Längdkontroll
+        const lengthCheck = document.getElementById('lengthCheck');
+        if (password.length >= 8) {
+            lengthCheck.innerHTML = '✅ Minst 8 tecken';
+            lengthCheck.style.color = '#28a745';
+        } else {
+            lengthCheck.innerHTML = '❌ Minst 8 tecken';
+            lengthCheck.style.color = '#dc3545';
+        }
+
+        // Bokstavskontroll
+        const letterCheck = document.getElementById('letterCheck');
+        if (/[a-zA-Z]/.test(password)) {
+            letterCheck.innerHTML = '✅ Innehåller bokstäver';
+            letterCheck.style.color = '#28a745';
+        } else {
+            letterCheck.innerHTML = '❌ Innehåller bokstäver';
+            letterCheck.style.color = '#dc3545';
+        }
+
+        // Sifferkontroll
+        const numberCheck = document.getElementById('numberCheck');
+        if (/\d/.test(password)) {
+            numberCheck.innerHTML = '✅ Innehåller siffror';
+            numberCheck.style.color = '#28a745';
+        } else {
+            numberCheck.innerHTML = '❌ Innehåller siffror';
+            numberCheck.style.color = '#dc3545';
+        }
+
+        // Kontrollera om lösenorden matchar
+        if (confirmPasswordInput.value) {
+            checkPasswordMatch();
+        }
+    }
+
+    function checkPasswordMatch() {
+        const password = passwordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
+        const matchDiv = document.getElementById('passwordMatch');
+        const errorDiv = document.getElementById('confirmPasswordError');
+
+        if (confirmPassword && password === confirmPassword) {
+            matchDiv.classList.remove('d-none');
+            errorDiv.classList.add('d-none');
+            confirmPasswordInput.classList.remove('is-invalid');
+            confirmPasswordInput.classList.add('is-valid');
+        } else if (confirmPassword) {
+            matchDiv.classList.add('d-none');
+            errorDiv.textContent = 'Lösenorden matchar inte';
+            errorDiv.classList.remove('d-none');
+            confirmPasswordInput.classList.add('is-invalid');
+            confirmPasswordInput.classList.remove('is-valid');
+        }
+    }
+
+    // Formulärhantering
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        // Hämta värden
+        const formData = {
+            firstName: document.getElementById('firstName').value,
+            lastName: document.getElementById('lastName').value,
+            email: document.getElementById('email').value,
+            password: document.getElementById('password').value,
+            confirmPassword: document.getElementById('confirmPassword').value
+        };
+
+        // Validera på klientsidan först
+        if (!validateForm(formData)) {
+            return;
+        }
+
+        // Visa laddning
+        const btn = document.getElementById('registerBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Registrerar...';
+
+        try {
+            const response = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                showAlert('Registrering lyckades! Omdirigerar till inloggning...', 'success');
+                setTimeout(() => {
+                    window.location.href = '/login.html';
+                }, 2000);
+            } else {
+                showAlert(data.message || 'Registrering misslyckades', 'danger');
+
+                // Visa specifika fältfel om de finns
+                if (data.message.includes('E-post')) {
+                    showFieldError('email', data.message);
+                }
+            }
+        } catch (error) {
+            console.error('Registration error:', error);
+            showAlert('Ett fel uppstod. Försök igen senare.', 'danger');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Skapa konto';
+        }
+    });
+
+    function validateForm(data) {
+        let isValid = true;
+
+        // Rensa tidigare fel
+        document.querySelectorAll('.field-error').forEach(el => {
+            el.classList.add('d-none');
+            el.textContent = '';
+        });
+        document.querySelectorAll('.form-control').forEach(el => {
+            el.classList.remove('is-invalid');
+        });
+
+        // Validera förnamn
+        if (data.firstName.length < 2) {
+            showFieldError('firstName', 'Förnamn måste vara minst 2 tecken');
+            isValid = false;
+        }
+
+        // Validera efternamn
+        if (data.lastName.length < 2) {
+            showFieldError('lastName', 'Efternamn måste vara minst 2 tecken');
+            isValid = false;
+        }
+
+        // Validera email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(data.email)) {
+            showFieldError('email', 'Ogiltig e-postadress');
+            isValid = false;
+        }
+
+        // Validera lösenord
+        const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d).{8,}$/;
+        if (!passwordRegex.test(data.password)) {
+            showFieldError('password', 'Lösenordet uppfyller inte kraven');
+            isValid = false;
+        }
+
+        // Kontrollera att lösenorden matchar
+        if (data.password !== data.confirmPassword) {
+            showFieldError('confirmPassword', 'Lösenorden matchar inte');
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    function showFieldError(fieldId, message) {
+        const field = document.getElementById(fieldId);
+        const errorDiv = document.getElementById(fieldId + 'Error');
+
+        field.classList.add('is-invalid');
+        if (errorDiv) {
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('d-none');
+        }
+    }
+
+    function showAlert(message, type) {
+        const alertBox = document.getElementById('alertBox');
+        alertBox.className = `alert alert-${type}`;
+        alertBox.textContent = message;
+        alertBox.classList.remove('d-none');
+
+        // Scrolla upp till meddelandet
+        alertBox.scrollIntoView({ behavior: 'smooth' });
+    }
+</script>
+</body>
+</html>
