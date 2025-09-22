@@ -45,14 +45,16 @@ public class User {
     @Column(name = "registration_date")
     private LocalDate registrationDate;
 
+    // Ändrat till wrapper Boolean för Hibernate
     @Column(name = "enabled", nullable = false, columnDefinition = "BOOLEAN DEFAULT 1")
-    private boolean enabled = true;
+    private Boolean enabled = true;
 
     @Column(name = "account_non_locked", nullable = false, columnDefinition = "BOOLEAN DEFAULT 1")
-    private boolean accountNonLocked = true;
+    private Boolean accountNonLocked = true;
 
+    // Ändrat till wrapper Integer
     @Column(name = "failed_login_attempts", nullable = false, columnDefinition = "INTEGER DEFAULT 0")
-    private int failedLoginAttempts = 0;
+    private Integer failedLoginAttempts = 0;
 
     @Column(name = "lock_time")
     private LocalDateTime lockTime;
@@ -71,7 +73,6 @@ public class User {
     // Default constructor
     public User() {}
 
-    // Constructor med grundläggande fält
     public User(String firstName, String lastName, String email, String password) {
         this.firstName = firstName;
         this.lastName = lastName;
@@ -80,6 +81,7 @@ public class User {
         this.registrationDate = LocalDate.now();
         this.enabled = true;
         this.accountNonLocked = true;
+        this.failedLoginAttempts = 0;
     }
 
     // Hjälpmetoder för roller
@@ -145,27 +147,27 @@ public class User {
         this.registrationDate = registrationDate;
     }
 
-    public boolean isEnabled() {
+    public Boolean getEnabled() {
         return enabled;
     }
 
-    public void setEnabled(boolean enabled) {
+    public void setEnabled(Boolean enabled) {
         this.enabled = enabled;
     }
 
-    public boolean isAccountNonLocked() {
+    public Boolean getAccountNonLocked() {
         return accountNonLocked;
     }
 
-    public void setAccountNonLocked(boolean accountNonLocked) {
+    public void setAccountNonLocked(Boolean accountNonLocked) {
         this.accountNonLocked = accountNonLocked;
     }
 
-    public int getFailedLoginAttempts() {
+    public Integer getFailedLoginAttempts() {
         return failedLoginAttempts;
     }
 
-    public void setFailedLoginAttempts(int failedLoginAttempts) {
+    public void setFailedLoginAttempts(Integer failedLoginAttempts) {
         this.failedLoginAttempts = failedLoginAttempts;
     }
 
@@ -195,5 +197,29 @@ public class User {
 
     public String getFullName() {
         return firstName + " " + lastName;
+    }
+
+    // ==============================
+    // Alias-metoder för Spring Security
+    // ==============================
+    public boolean isEnabledPrimitive() {
+        return enabled != null ? enabled : true;
+    }
+
+    public boolean isAccountNonLockedPrimitive() {
+        return accountNonLocked != null ? accountNonLocked : true;
+    }
+
+    // Behåller gamla metodnamn för kompatibilitet med Spring Security
+    public boolean isEnabled() {
+        return isEnabledPrimitive();
+    }
+
+    public boolean isAccountNonLocked() {
+        return isAccountNonLockedPrimitive();
+    }
+
+    public int getFailedLoginAttemptsPrimitive() {
+        return failedLoginAttempts != null ? failedLoginAttempts : 0;
     }
 }
