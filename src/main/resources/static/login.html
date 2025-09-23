@@ -35,6 +35,11 @@
             height: 1rem;
             margin-right: 5px;
         }
+        .csrf-info {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -42,6 +47,11 @@
     <div class="login-header">
         <h2>📚 Bibliotekssystem</h2>
         <p class="text-muted">Logga in för att fortsätta</p>
+    </div>
+
+    <!-- CSRF-status (för debugging) -->
+    <div id="csrfStatus" class="csrf-info text-center mb-3">
+        🔒 Hämtar säkerhetstoken...
     </div>
 
     <!-- Meddelanden -->
@@ -80,24 +90,57 @@
     </form>
 
     <div class="mt-4 text-center">
-        <small class="text-muted">🔒 Din inloggning är säkrad med BCrypt-kryptering</small>
+        <small class="text-muted">🔒 Din inloggning är säkrad med BCrypt-kryptering och CSRF-skydd</small>
     </div>
 </div>
 
+<script src="/js/auth.js"></script>
 <script>
-    // Kontrollera URL-parametrar för meddelanden
-    const urlParams = new URLSearchParams(window.location.search);
-    const alertBox = document.getElementById('alertBox');
+    let csrfReady = false;
 
-    if (urlParams.has('logout')) {
-        showAlert('Du har loggats ut', 'success');
-    } else if (urlParams.has('error')) {
-        showAlert('Session har gått ut eller åtkomst nekad', 'danger');
+    // Initiera CSRF och uppdatera status
+    async function initializeCsrf() {
+        const statusDiv = document.getElementById('csrfStatus');
+
+        try {
+            const token = await getCsrfToken();
+            if (token) {
+                statusDiv.innerHTML = '🔒 CSRF-skydd aktiverat';
+                statusDiv.className = 'csrf-info text-center mb-3 text-success';
+                csrfReady = true;
+            } else {
+                statusDiv.innerHTML = '⚠️ CSRF-token ej tillgängligt';
+                statusDiv.className = 'csrf-info text-center mb-3 text-warning';
+            }
+        } catch (error) {
+            statusDiv.innerHTML = '❌ CSRF-fel: ' + error.message;
+            statusDiv.className = 'csrf-info text-center mb-3 text-danger';
+        }
     }
 
-    // Formulärhantering
+    // Initiera när sidan laddas
+    document.addEventListener('DOMContentLoaded', async () => {
+        await initializeCsrf();
+
+        // Kontrollera URL-parametrar för meddelanden
+        const urlParams = new URLSearchParams(window.location.search);
+        const alertBox = document.getElementById('alertBox');
+
+        if (urlParams.has('logout')) {
+            showAlert('Du har loggats ut', 'success');
+        } else if (urlParams.has('error')) {
+            showAlert('Session har gått ut eller åtkomst nekad', 'danger');
+        }
+    });
+
+    // Formulärhantering med CSRF
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        if (!csrfReady) {
+            showAlert('Väntar på säkerhetstoken. Försök igen om en sekund.', 'warning');
+            return;
+        }
 
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
@@ -107,18 +150,7 @@
         hideAlert();
 
         try {
-            const response = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include', // Viktigt för cookies/session
-                body: JSON.stringify({
-                    email: email,
-                    password: password
-                })
-            });
-
+            const response = await loginWithCsrf(email, password);
             const data = await response.json();
 
             if (response.ok && data.success) {
@@ -127,6 +159,7 @@
                     email: data.email,
                     firstName: data.firstName,
                     lastName: data.lastName,
+                    userId: data.userId,
                     roles: data.roles
                 }));
 
@@ -137,7 +170,15 @@
                     window.location.href = '/dashboard.html';
                 }, 1000);
             } else {
-                showAlert(data.message || 'Felaktigt användarnamn eller lösenord', 'danger');
+                // Hantera CSRF-fel specifikt
+                if (response.status === 403) {
+                    showAlert('Säkerhetsfel. Laddar om sidan...', 'danger');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    showAlert(data.message || 'Felaktigt användarnamn eller lösenord', 'danger');
+                }
             }
         } catch (error) {
             console.error('Login error:', error);
@@ -148,12 +189,14 @@
     });
 
     function showAlert(message, type) {
+        const alertBox = document.getElementById('alertBox');
         alertBox.className = `alert alert-${type}`;
         alertBox.textContent = message;
         alertBox.classList.remove('d-none');
     }
 
     function hideAlert() {
+        const alertBox = document.getElementById('alertBox');
         alertBox.classList.add('d-none');
     }
 

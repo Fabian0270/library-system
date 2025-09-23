@@ -12,6 +12,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -39,11 +40,18 @@ public class ApiSecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                // CSRF-skydd med cookie-baserad token
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        // Undanta vissa endpoints från CSRF om nödvändigt
+                        .ignoringRequestMatchers(
+                                "/api/auth/check",  // GET-anrop behöver inte CSRF
+                                "/api/auth/debug/**"  // Debug endpoints
+                        )
+                )
+
                 // CORS för JavaScript
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
-                // CSRF - inaktivera för API endpoints
-                .csrf(csrf -> csrf.disable())
 
                 // Auktoriseringsregler
                 .authorizeHttpRequests(authz -> authz
@@ -56,7 +64,8 @@ public class ApiSecurityConfig {
                         .requestMatchers("/api/auth/debug/**").permitAll()
 
                         // Auth endpoints - publika
-                        .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/check").permitAll()
+                        .requestMatchers("/api/auth/login", "/api/auth/register",
+                                "/api/auth/check", "/api/auth/csrf").permitAll()
 
                         // API endpoints med rollkrav
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
@@ -93,7 +102,7 @@ public class ApiSecurityConfig {
                         .logoutUrl("/api/auth/logout")
                         .logoutSuccessUrl("/login.html?logout=true")
                         .invalidateHttpSession(true)
-                        .deleteCookies("JSESSIONID")
+                        .deleteCookies("JSESSIONID", "XSRF-TOKEN")
                         .permitAll()
                 )
 
@@ -131,10 +140,13 @@ public class ApiSecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:8080", "*"));
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:8080"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
+
+        // VIKTIGT: Tillåt CSRF-header
+        configuration.addExposedHeader("X-CSRF-TOKEN");
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

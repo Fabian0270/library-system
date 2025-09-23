@@ -1,7 +1,6 @@
 package com.example.library_system.controller;
 
 import com.example.library_system.dto.LoginRequest;
-import com.example.library_system.dto.LoginResponse;
 import com.example.library_system.dto.RegistrationDTO;
 import com.example.library_system.entity.Role;
 import com.example.library_system.entity.User;
@@ -22,6 +21,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -52,7 +52,24 @@ public class AuthApiController {
     @Autowired
     private SecurityLogService securityLogService;
 
-    // Login endpoint
+    // CSRF Token endpoint - VIKTIGT!
+    @GetMapping("/csrf")
+    public ResponseEntity<?> getCsrfToken(HttpServletRequest request) {
+        CsrfToken csrfToken = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
+
+        Map<String, Object> response = new HashMap<>();
+        if (csrfToken != null) {
+            response.put("token", csrfToken.getToken());
+            response.put("headerName", csrfToken.getHeaderName());
+            response.put("parameterName", csrfToken.getParameterName());
+        } else {
+            response.put("message", "CSRF token not available");
+        }
+
+        return ResponseEntity.ok(response);
+    }
+
+    // Login endpoint med CSRF-validering
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest,
                                    HttpServletRequest request) {
@@ -105,7 +122,7 @@ public class AuthApiController {
         }
     }
 
-    // Registrering endpoint
+    // Registrering endpoint med CSRF-validering
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegistrationDTO registrationDTO,
                                       HttpServletRequest request) {
@@ -218,14 +235,6 @@ public class AuthApiController {
         return ResponseEntity.ok(response);
     }
 
-    // Hämta CSRF token
-    @GetMapping("/csrf")
-    public ResponseEntity<?> getCsrfToken(HttpServletRequest request) {
-        Map<String, String> response = new HashMap<>();
-        response.put("token", (String) request.getAttribute("_csrf.token"));
-        return ResponseEntity.ok(response);
-    }
-
     // ============== DEBUG ENDPOINTS - TA BORT I PRODUKTION! ==============
 
     // Debug: Fixa användare som saknar roll
@@ -234,7 +243,6 @@ public class AuthApiController {
         Map<String, Object> result = new HashMap<>();
 
         try {
-            // Hitta användaren
             Optional<User> userOpt = userRepository.findByEmail(email);
 
             if (!userOpt.isPresent()) {
@@ -247,7 +255,6 @@ public class AuthApiController {
             result.put("email", user.getEmail());
             result.put("hadRoles", user.getRoles().size());
 
-            // Om användaren saknar roller, lägg till USER-rollen
             if (user.getRoles().isEmpty()) {
                 Role userRole = roleRepository.findByName("USER")
                         .orElseGet(() -> {
@@ -267,7 +274,6 @@ public class AuthApiController {
                         .collect(Collectors.toList()));
             }
 
-            // Kontrollera att kontot är aktivt
             if (!user.isEnabled()) {
                 user.setEnabled(true);
                 userRepository.save(user);
@@ -315,7 +321,6 @@ public class AuthApiController {
             info.put("exists", false);
         }
 
-        // Lista alla användare (för debug)
         info.put("allUsers", userRepository.findAll().stream()
                 .map(User::getEmail)
                 .collect(Collectors.toList()));
@@ -351,13 +356,11 @@ public class AuthApiController {
             for (User user : allUsers) {
                 boolean needsUpdate = false;
 
-                // Fixa null-värden genom att sätta defaults
                 if (user.getFailedLoginAttempts() < 0) {
                     user.setFailedLoginAttempts(0);
                     needsUpdate = true;
                 }
 
-                // För boolean, sätt alltid till true om det finns problem
                 user.setEnabled(true);
                 user.setAccountNonLocked(true);
                 needsUpdate = true;
@@ -373,7 +376,6 @@ public class AuthApiController {
             result.put("totalUsers", allUsers.size());
             result.put("message", "Alla användare har uppdaterats med korrekta värden");
 
-            // Lista alla användare med deras status
             result.put("users", allUsers.stream()
                     .map(u -> {
                         Map<String, Object> userInfo = new HashMap<>();
@@ -392,5 +394,4 @@ public class AuthApiController {
             return ResponseEntity.status(500).body(result);
         }
     }
-
 }

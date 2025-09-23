@@ -40,6 +40,11 @@
             color: #28a745;
             font-size: 0.875rem;
         }
+        .csrf-info {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-bottom: 15px;
+        }
     </style>
 </head>
 <body>
@@ -47,6 +52,11 @@
     <div class="text-center mb-4">
         <h2>📚 Skapa konto</h2>
         <p class="text-muted">Registrera dig för att börja använda bibliotekssystemet</p>
+    </div>
+
+    <!-- CSRF-status -->
+    <div id="csrfStatus" class="csrf-info text-center">
+        🔒 Hämtar säkerhetstoken...
     </div>
 
     <div id="alertBox" class="alert d-none" role="alert"></div>
@@ -120,9 +130,41 @@
             </p>
         </div>
     </form>
+
+    <div class="mt-3 text-center">
+        <small class="text-muted">🔒 Skyddat med BCrypt-kryptering och CSRF-skydd</small>
+    </div>
 </div>
 
+<script src="/js/auth.js"></script>
 <script>
+    let csrfReady = false;
+
+    // Initiera CSRF
+    async function initializeCsrf() {
+        const statusDiv = document.getElementById('csrfStatus');
+
+        try {
+            const token = await getCsrfToken();
+            if (token) {
+                statusDiv.innerHTML = '🔒 CSRF-skydd aktiverat';
+                statusDiv.className = 'csrf-info text-center text-success';
+                csrfReady = true;
+            } else {
+                statusDiv.innerHTML = '⚠️ CSRF-token ej tillgängligt';
+                statusDiv.className = 'csrf-info text-center text-warning';
+            }
+        } catch (error) {
+            statusDiv.innerHTML = '❌ CSRF-fel: ' + error.message;
+            statusDiv.className = 'csrf-info text-center text-danger';
+        }
+    }
+
+    // Initiera när sidan laddas
+    document.addEventListener('DOMContentLoaded', async () => {
+        await initializeCsrf();
+    });
+
     // Lösenordsvalidering i realtid
     const passwordInput = document.getElementById('password');
     const confirmPasswordInput = document.getElementById('confirmPassword');
@@ -189,9 +231,14 @@
         }
     }
 
-    // Formulärhantering
+    // Formulärhantering med CSRF
     document.getElementById('registerForm').addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        if (!csrfReady) {
+            showAlert('Väntar på säkerhetstoken. Försök igen om en sekund.', 'warning');
+            return;
+        }
 
         // Hämta värden
         const formData = {
@@ -213,14 +260,7 @@
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Registrerar...';
 
         try {
-            const response = await fetch('/api/auth/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData)
-            });
-
+            const response = await registerWithCsrf(formData);
             const data = await response.json();
 
             if (response.ok && data.success) {
@@ -229,11 +269,19 @@
                     window.location.href = '/login.html';
                 }, 2000);
             } else {
-                showAlert(data.message || 'Registrering misslyckades', 'danger');
+                // Hantera CSRF-fel
+                if (response.status === 403) {
+                    showAlert('Säkerhetsfel. Laddar om sidan...', 'danger');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    showAlert(data.message || 'Registrering misslyckades', 'danger');
 
-                // Visa specifika fältfel om de finns
-                if (data.message.includes('E-post')) {
-                    showFieldError('email', data.message);
+                    // Visa specifika fältfel om de finns
+                    if (data.message && data.message.includes('E-post')) {
+                        showFieldError('email', data.message);
+                    }
                 }
             }
         } catch (error) {
@@ -312,6 +360,3 @@
         // Scrolla upp till meddelandet
         alertBox.scrollIntoView({ behavior: 'smooth' });
     }
-</script>
-</body>
-</html>
