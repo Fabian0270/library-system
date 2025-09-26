@@ -59,7 +59,7 @@ class LoanServiceTest {
     }
 
     @Test
-    @DisplayName("G-KRAV TEST: Kontrollera att rätt datum sätts på dueDate när man lägger ett lån")
+    @DisplayName("KRAV TEST: Kontrollera att rätt datum sätts på dueDate när man lägger ett lån")
     void testCreateLoan_ShouldSetCorrectDueDate() {
         // Arrange
         LocalDate today = LocalDate.now();
@@ -92,13 +92,13 @@ class LoanServiceTest {
                 createdLoan.getBorrowedDate().toEpochDay();
         assertEquals(14, daysBetween, "Det ska vara exakt 14 dagar mellan lån och återlämning");
 
-        System.out.println("✅ G-KRAV UPPFYLLT: DueDate sätts korrekt till +14 dagar");
+        System.out.println("✅ KRAV UPPFYLLT: DueDate sätts korrekt till +14 dagar");
         System.out.println("   Lånat: " + createdLoan.getBorrowedDate());
         System.out.println("   Återlämning: " + createdLoan.getDueDate());
     }
 
     @Test
-    @DisplayName("G-KRAV TEST: Man kan inte lägga ett lån om boken har 0 available copies")
+    @DisplayName("KRAV TEST: Man kan inte lägga ett lån om boken har 0 available copies")
     void testCreateLoan_ShouldFailWhenNoAvailableCopies() {
         // Arrange
         testBook.setAvailableCopies(0); // Sätt till 0 tillgängliga kopior
@@ -123,7 +123,7 @@ class LoanServiceTest {
         // Verifiera att available copies INTE minskades
         verify(bookService, never()).decreaseAvailableCopies(anyLong());
 
-        System.out.println("✅ G-KRAV UPPFYLLT: Lån blockeras när available_copies = 0");
+        System.out.println("✅ KRAV UPPFYLLT: Lån blockeras när available_copies = 0");
         System.out.println("   Exception message: " + exception.getMessage());
     }
 
